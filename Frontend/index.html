@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ViKeY — Authorize Your Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #080b0f;
+    --surface: #0e1318;
+    --border: #1e2830;
+    --accent: #00e5a0;
+    --accent2: #00aaff;
+    --warn: #ff6b35;
+    --text: #e8f0f8;
+    --muted: #5a6a7a;
+    --card: #111820;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: rgba(8,11,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .status-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .conn-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+  .conn-badge.connected {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .conn-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .conn-badge.connected .conn-dot {
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.4; }
+  }
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 48px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+  /* ── CONNECT SECTION ── */
+  .section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 48px 60px;
+  }
+  .section-label {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  /* ── SERVICE CARDS ── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .service-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .service-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .service-card.active {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.04);
+  }
+  .service-card.connected-svc {
+    border-color: var(--accent2);
+  }
+  .svc-icon { font-size: 1.6rem; margin-bottom: 10px; }
+  .svc-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .svc-scope {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+  .svc-status {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: rgba(0,229,160,0.1);
+    color: var(--accent);
+    display: none;
+  }
+  .service-card.connected-svc .svc-status { display: block; }
+
+  /* ── CONNECT BUTTONS ── */
+  .connect-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #00ffc0; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: rgba(255,107,53,0.1);
+    color: var(--warn);
+    border: 1px solid rgba(255,107,53,0.3);
+  }
+
+  /* ── WORKFLOW BUILDER ── */
+  .workflow-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .workflow-box h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .prompt-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  textarea {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    resize: none;
+    min-height: 80px;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
+
+  /* ── WORKFLOW STEPS ── */
+  .steps-list { margin-top: 24px; }
+  .step-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    animation: slideIn 0.3s ease;
+  }
+  .step-item:last-child { border-bottom: none; }
+  @keyframes slideIn {
+    from { opacity:0; transform: translateX(-10px); }
+    to   { opacity:1; transform: translateX(0); }
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-num.success { background: rgba(0,229,160,0.2); color: var(--accent); }
+  .step-num.error   { background: rgba(255,107,53,0.2); color: var(--warn); }
+  .step-num.running { background: rgba(0,170,255,0.2); color: var(--accent2); }
+  .step-content { flex: 1; }
+  .step-action { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .step-desc { font-size: 0.8rem; color: var(--muted); }
+  .step-perm {
+    margin-top: 6px;
+    display: inline-block;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0,170,255,0.08);
+    color: var(--accent2);
+    border: 1px solid rgba(0,170,255,0.2);
+  }
+  .step-result {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .step-result.error { color: var(--warn); }
+
+  /* ── REPOS LIST ── */
+  .repos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .repo-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.2s;
+  }
+  .repo-card:hover { border-color: var(--accent); }
+  .repo-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+  .repo-name a { color: var(--accent); text-decoration: none; }
+  .repo-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .repo-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+
+  /* ── ALERT / TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    z-index: 1000;
+    animation: toastIn 0.3s ease;
+    max-width: 340px;
+  }
+  .toast.error { border-color: var(--warn); color: var(--warn); }
+  @keyframes toastIn {
+    from { transform: translateY(20px); opacity:0; }
+    to   { transform: translateY(0);    opacity:1; }
+  }
+
+  /* ── LOADER ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Vi<span>KeY</span> <span style="font-size:0.6rem;color:var(--muted);font-weight:400;font-family:'JetBrains Mono',monospace;">v0.1</span></div>
+  <div class="status-bar">
+    <div class="conn-badge" id="badge-github">
+      <div class="conn-dot"></div> GitHub
+    </div>
+    <div class="conn-badge" id="badge-notion">
+      <div class="conn-dot"></div> Notion
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="session-display"></div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Authorize your<br/>AI to <em>act</em>.</h1>
+  <p>ViKeY lets AI agents work across your apps — with Auth0 Token Vault keeping every permission scoped, transparent, and revocable.</p>
+</div>
+
+<!-- MAIN -->
+<div class="section">
+
+  <!-- STEP 1: Connect Services -->
+  <div class="section-label">01 — Connect Services</div>
+  <div class="services-grid">
+    <div class="service-card active" id="svc-github">
+      <div class="svc-status">connected</div>
+      <div class="svc-icon">🐙</div>
+      <div class="svc-name">GitHub</div>
+      <div class="svc-scope">read:user · public_repo</div>
+    </div>
+    <div class="service-card active" id="svc-notion">
+      <div class="svc-status">connected</div>
+      <div class="svc-icon">📝</div>
+      <div class="svc-name">Notion</div>
+      <div class="svc-scope">pages:write · search</div>
+    </div>
+    <div class="service-card" id="svc-spotify" style="opacity:0.5;cursor:default;">
+      <div class="svc-icon">🎵</div>
+      <div class="svc-name">Spotify</div>
+      <div class="svc-scope">coming soon</div>
+    </div>
+    <div class="service-card" id="svc-slack" style="opacity:0.5;cursor:default;">
+      <div class="svc-icon">💬</div>
+      <div class="svc-name">Slack</div>
+      <div class="svc-scope">coming soon</div>
+    </div>
+  </div>
+
+  <div class="connect-actions">
+    <button class="btn btn-primary" onclick="connectGitHub()">🔗 Connect GitHub</button>
+    <button class="btn btn-secondary" onclick="checkStatus()">↺ Refresh Status</button>
+    <button class="btn btn-danger hidden" id="revoke-btn" onclick="revokeAll()">✕ Revoke All Access</button>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- STEP 2: AI Workflow -->
+  <div class="section-label">02 — Build a Workflow</div>
+  <div class="workflow-box">
+    <h3>🤖 What should ViKeY do?</h3>
+    <div class="prompt-row">
+      <textarea id="prompt-input" placeholder="e.g. Fetch my starred GitHub repos and save them to Notion as a reading list..."></textarea>
+      <button class="btn btn-primary" onclick="generateWorkflow()" style="align-self:flex-end;white-space:nowrap;">
+        Generate →
+      </button>
+    </div>
+
+    <!-- Generated workflow steps -->
+    <div id="workflow-output" class="hidden">
+      <div style="margin-top:24px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;font-size:1rem;" id="workflow-title"></div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;" id="workflow-summary"></div>
+        </div>
+        <button class="btn btn-primary" onclick="runWorkflow()">▶ Run Workflow</button>
+      </div>
+      <div class="steps-list" id="steps-list"></div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- STEP 3: Live Results -->
+  <div class="section-label" id="results-label" style="display:none;">03 — Live Results</div>
+  <div id="run-results"></div>
+
+  <!-- STEP 4: GitHub Repos -->
+  <div id="repos-section" class="hidden">
+    <hr class="divider"/>
+    <div class="section-label">Your GitHub Starred Repos</div>
+    <div class="repos-grid" id="repos-grid"></div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let sessionId = null;
+let currentWorkflow = null;
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check URL for session param (after OAuth redirect)
+  const params = new URLSearchParams(window.location.search);
+  const urlSession = params.get('session');
+  const connected  = params.get('connected');
+
+  if (urlSession) {
+    sessionId = urlSession;
+    localStorage.setItem('vikey_session', sessionId);
+    window.history.replaceState({}, '', '/');
+    if (connected) showToast(`✅ ${connected} connected successfully!`);
+  } else {
+    sessionId = localStorage.getItem('vikey_session');
+  }
+
+  if (sessionId) {
+    document.getElementById('session-display').textContent = `session: ${sessionId.slice(0,8)}...`;
+    await checkStatus();
+  }
+});
+
+// ── STATUS ────────────────────────────────────────────────
+async function checkStatus() {
+  if (!sessionId) return;
+  try {
+    const r = await fetch(`${API}/session/${sessionId}`);
+    const d = await r.json();
+    updateBadge('github', d.github_connected);
+    updateBadge('notion', d.notion_connected);
+    if (d.github_connected) {
+      document.getElementById('svc-github').classList.add('connected-svc');
+      document.getElementById('revoke-btn').classList.remove('hidden');
+    }
+    if (d.notion_connected) {
+      document.getElementById('svc-notion').classList.add('connected-svc');
+    }
+  } catch(e) {
+    // Backend might not be running
+  }
+}
+
+function updateBadge(svc, connected) {
+  const el = document.getElementById(`badge-${svc}`);
+  if (connected) el.classList.add('connected');
+  else el.classList.remove('connected');
+}
+
+// ── CONNECT GITHUB ────────────────────────────────────────
+async function connectGitHub() {
+  if (!sessionId) {
+    // Create a temp session first
+    sessionId = 'sess_' + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem('vikey_session', sessionId);
+  }
+  window.location.href = `${API}/auth/github?session_id=${sessionId}`;
+}
+
+// ── REVOKE ────────────────────────────────────────────────
+function revokeAll() {
+  localStorage.removeItem('vikey_session');
+  sessionId = null;
+  ['github','notion'].forEach(s => updateBadge(s, false));
+  document.getElementById('svc-github').classList.remove('connected-svc');
+  document.getElementById('svc-notion').classList.remove('connected-svc');
+  document.getElementById('revoke-btn').classList.add('hidden');
+  document.getElementById('session-display').textContent = '';
+  showToast('🔒 All access revoked');
+}
+
+// ── GENERATE WORKFLOW ─────────────────────────────────────
+async function generateWorkflow() {
+  const prompt = document.getElementById('prompt-input').value.trim();
+  if (!prompt) { showToast('Please enter a prompt first', 'error'); return; }
+
+  const btn = event.currentTarget;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`${API}/workflow/generate`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt, services: ['github','notion'], session_id: sessionId })
+    });
+
+    if (!r.ok) throw new Error('API error');
+    const wf = await r.json();
+    currentWorkflow = wf;
+
+    // Render
+    document.getElementById('workflow-title').textContent = wf.title;
+    document.getElementById('workflow-summary').textContent = wf.summary;
+
+    const list = document.getElementById('steps-list');
+    list.innerHTML = '';
+    wf.steps.forEach(s => {
+      const icons = { github:'🐙', notion:'📝', spotify:'🎵', gmail:'📧', slack:'💬' };
+      list.innerHTML += `
+        <div class="step-item" id="step-${s.id}">
+          <div class="step-num" id="step-num-${s.id}">${s.id}</div>
+          <div class="step-content">
+            <div class="step-action">${icons[s.service]||'⚡'} ${s.action}</div>
+            <div class="step-desc">${s.description}</div>
+            <span class="step-perm">${s.permission}</span>
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('workflow-output').classList.remove('hidden');
+    showToast('✅ Workflow generated by Claude');
+
+  } catch(e) {
+    showToast('Could not reach backend. Is uvicorn running?', 'error');
+    // Fallback mock
+    fallbackGenerate(prompt);
+  } finally {
+    btn.innerHTML = 'Generate →';
+    btn.disabled = false;
+  }
+}
+
+function fallbackGenerate(prompt) {
+  const wf = {
+    title: "GitHub → Notion Sync",
+    summary: "Fetch your starred repos and save them to Notion",
+    steps: [
+      { id:1, service:'github', action:'Fetch Starred Repos', description:'Get your latest starred repositories', permission:'public_repo:read' },
+      { id:2, service:'notion', action:'Create Notion Page', description:'Save repos as a Notion page', permission:'pages:write' },
+    ]
+  };
+  currentWorkflow = wf;
+  document.getElementById('workflow-title').textContent = wf.title;
+  document.getElementById('workflow-summary').textContent = wf.summary;
+  const list = document.getElementById('steps-list');
+  list.innerHTML = '';
+  wf.steps.forEach(s => {
+    list.innerHTML += `
+      <div class="step-item" id="step-${s.id}">
+        <div class="step-num" id="step-num-${s.id}">${s.id}</div>
+        <div class="step-content">
+          <div class="step-action">${s.action}</div>
+          <div class="step-desc">${s.description}</div>
+          <span class="step-perm">${s.permission}</span>
+        </div>
+      </div>`;
+  });
+  document.getElementById('workflow-output').classList.remove('hidden');
+}
+
+// ── RUN WORKFLOW ──────────────────────────────────────────
+async function runWorkflow() {
+  const prompt = document.getElementById('prompt-input').value.trim();
+  document.getElementById('results-label').style.display = 'block';
+  const resultsEl = document.getElementById('run-results');
+  resultsEl.innerHTML = '<div style="color:var(--muted);font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;">⟳ Running workflow...</div>';
+
+  // Animate steps to running
+  if (currentWorkflow) {
+    currentWorkflow.steps.forEach(s => {
+      const numEl = document.getElementById(`step-num-${s.id}`);
+      if (numEl) { numEl.classList.add('running'); numEl.textContent = '…'; }
+    });
+  }
+
+  try {
+    const r = await fetch(`${API}/workflow/run`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt, services: ['github','notion'], session_id: sessionId })
+    });
+    const data = await r.json();
+
+    // Render results
+    resultsEl.innerHTML = `<div class="workflow-box">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:16px;">
+        workflow_id: ${data.workflow_id} · status: ${data.status}
+      </div>
+      <div class="steps-list">
+        ${data.results.map(res => `
+          <div class="step-item">
+            <div class="step-num ${res.status}">${res.status==='success'?'✓':res.status==='error'?'✗':'—'}</div>
+            <div class="step-content">
+              <div class="step-action">${res.action}</div>
+              <div class="step-result ${res.status==='error'?'error':''}">${res.data}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+    // Update step indicators
+    if (currentWorkflow && data.results) {
+      data.results.forEach((res, i) => {
+        const step = currentWorkflow.steps[i];
+        if (!step) return;
+        const numEl = document.getElementById(`step-num-${step.id}`);
+        if (numEl) {
+          numEl.classList.remove('running');
+          numEl.classList.add(res.status);
+          numEl.textContent = res.status === 'success' ? '✓' : res.status === 'error' ? '✗' : step.id;
+        }
+      });
+    }
+
+    // If GitHub connected, also show starred repos
+    if (sessionId) loadStarredRepos();
+    showToast('🚀 Workflow completed!');
+
+  } catch(e) {
+    resultsEl.innerHTML = '<div style="color:var(--warn);font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;">⚠ Backend not reachable. Start uvicorn to run real workflows.</div>';
+  }
+}
+
+// ── LOAD STARRED REPOS ────────────────────────────────────
+async function loadStarredRepos() {
+  if (!sessionId) return;
+  try {
+    const r = await fetch(`${API}/github/starred?session_id=${sessionId}&limit=6`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.repos?.length) return;
+
+    document.getElementById('repos-section').classList.remove('hidden');
+    const grid = document.getElementById('repos-grid');
+    grid.innerHTML = data.repos.map(repo => `
+      <div class="repo-card">
+        <div class="repo-name"><a href="${repo.url}" target="_blank">${repo.name}</a></div>
+        <div class="repo-desc">${repo.description || 'No description'}</div>
+        <div class="repo-meta">
+          <span>★ ${repo.stars.toLocaleString()}</span>
+          <span>${repo.language || '?'}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${type === 'error' ? 'error' : ''}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
+</body>
+</html>
