@@ -62,8 +62,4 @@ vikey/
 
 
 
-\
 
----
-
-Built with ❤️ using Auth0, Anthropic Claude, FastAPI, and React.
