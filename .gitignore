@@ -1,0 +1,6 @@
+Backend/.env
+Backend/ViKeY.env.rtf
+Backend/sessions.json
+Backend/__pycache__/
+Frontend/node_modules/
+.DS_Store
