@@ -4,3 +4,11 @@ Backend/sessions.json
 Backend/__pycache__/
 Frontend/node_modules/
 .DS_Store
+
+# Local credentials and persistent authentication artifacts
+.env
+.env.*
+!.env.example
+**/sessions.json
+**/*.pem
+**/*.key
