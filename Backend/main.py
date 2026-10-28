@@ -51,7 +51,17 @@ def _load_sessions() -> dict:
     return {}
 
 def _save_sessions(s: dict):
-    _SESSIONS_FILE.write_text(json.dumps(s))
+    import os
+    import tempfile
+    fd, temp_path = tempfile.mkstemp(prefix=".sessions-", dir=str(_SESSIONS_FILE.parent))
+    try:
+        with os.fdopen(fd, "w") as file:
+            json.dump(s, file)
+        os.chmod(temp_path, 0o600)
+        os.replace(temp_path, _SESSIONS_FILE)
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 sessions: dict = _load_sessions()
 # Backfill notion_token into any persisted sessions that are missing it
